@@ -710,14 +710,14 @@
         <input
           type="text"
           id="customer"
-          placeholder="既有件號自動帶入，可手動修改；不知道可留白"
+          placeholder="既有件號自動帶入；不知道客戶可留白"
         >
 
         <div
           id="customerHint"
           class="field-hint"
         >
-          既有件號會自動帶入客戶，但可以手動修改；不知道可留白。
+          既有件號由系統自動帶入；若不知道客戶可留白，後續由管理人員確認。
         </div>
       </div>
 
@@ -1153,10 +1153,10 @@
 // ============================================================
 
 const LIFF_ID =
-  '2012134324-rz8IdkhZ';
+  '2011673429-ROxFgkBr';
 
 const GAS_WEB_APP_URL =
-  'https://script.google.com/macros/s/AKfycbyEW58zAoPRK3G2AdD5GzVL0ejWrKuLeeHDwrHrJPdNGiPV344y9P5uahDOzWTXxrJJ/exec';
+  'https://script.google.com/macros/s/AKfycbyCdjMiE1RrNlAue5OzMGQCa9vhgd0cmwdjRE-G96377aA0IXFkCclh_GUoOe4qN8GFeg/exec';
 
 
 // ============================================================
@@ -1891,10 +1891,10 @@ function updatePartAndCustomer() {
       ].customer || '';
 
     customer.readOnly =
-      false;
+      true;
 
     customerHint.textContent =
-      '此件號已自動帶入客戶，如有需要可手動修改。';
+      '此件號來自既有清單，客戶已自動帶入。';
 
     customerHint.classList.remove(
       'manual-hint'
@@ -1916,7 +1916,7 @@ function updatePartAndCustomer() {
 
     } else {
       customerHint.textContent =
-        '既有件號會自動帶入客戶，但可以手動修改；不知道可留白。';
+        '既有件號由系統自動帶入；若不知道客戶可留白，後續由管理人員確認。';
 
       customerHint.classList.remove(
         'manual-hint'
@@ -2628,7 +2628,7 @@ function resetEntryFields() {
       'customerHint'
     )
     .textContent =
-      '既有件號會自動帶入客戶，但可以手動修改；不知道可留白。';
+      '既有件號由系統自動帶入；若不知道客戶可留白，後續由管理人員確認。';
 
   document
     .getElementById(
@@ -3711,6 +3711,18 @@ async function submitFinishedReport(
       'error'
     );
     return;
+  }
+
+  // 數量回報：重量為選填；同時填寫時只提醒，不覆寫 pcs。
+  if (getFinishedMode_() === '數量') {
+    const q = Number(document.getElementById('finishedDirectQty').value);
+    const wRaw = document.getElementById('finishedTotalWeight').value.trim();
+    const uRaw = document.getElementById('finishedUnitWeight').value.trim();
+    if (!Number.isSafeInteger(q) || q <= 0) { showFinishedMessage('完成數量必須為正整數','error'); return; }
+    if ((wRaw && !(totalWeight > 0)) || (uRaw && !(unitWeight > 0))) { showFinishedMessage('選填重量若有輸入，必須大於 0','error'); return; }
+    if (wRaw && uRaw && Math.abs(Math.round(totalWeight*1000/unitWeight)-q)/q > 0.05) {
+      if (!confirm('重量換算約 '+Math.round(totalWeight*1000/unitWeight)+' pcs，與填寫的 '+q+' pcs 差異超過 5%。仍要以填寫數量送出嗎？')) return;
+    }
   }
 
   if (!currentFinishedRequestId) {
