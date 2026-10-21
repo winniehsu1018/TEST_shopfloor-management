@@ -3304,6 +3304,31 @@ function updateFinishedMode_(){
 }
 document.querySelectorAll('input[name="reportMode"]').forEach(r=>r.addEventListener('change',updateFinishedMode_));
 
+// 輸入時即時顯示差異，僅提示、不修改員工填寫的 pcs。
+function updateQuantityWeightDifferenceNotice_(){
+  const qEl=document.getElementById('finishedDirectQty'), wEl=document.getElementById('finishedTotalWeight'), uEl=document.getElementById('finishedUnitWeight');
+  if(!qEl||!wEl||!uEl)return;
+  let notice=document.getElementById('quantityWeightDifferenceNotice');
+  if(!notice){
+    notice=document.createElement('div');notice.id='quantityWeightDifferenceNotice';
+    notice.style.cssText='display:none;margin:10px 0;padding:12px;border-radius:10px;font-size:14px;line-height:1.6';
+    qEl.closest('.form-group')?.insertAdjacentElement('afterend',notice);
+    if(!notice.isConnected)qEl.parentElement.appendChild(notice);
+  }
+  const mode=getFinishedMode_();
+  const q=Number(qEl.value),w=Number(wEl.value),u=Number(uEl.value);
+  if(mode!=='數量'||!qEl.value.trim()||!wEl.value.trim()||!uEl.value.trim()||!(q>0&&w>0&&u>0)){notice.style.display='none';return;}
+  const estimated=Math.round(w*1000/u),difference=Math.abs(estimated-q)/q*100;
+  const warning=difference>5;
+  notice.style.display='block';
+  notice.style.background=warning?'#fff3e0':'#e8f5e9';
+  notice.style.color=warning?'#9a4d00':'#176a38';
+  notice.style.border=warning?'1px solid #f0c36d':'1px solid #a7d7b4';
+  notice.textContent=(warning?'⚠️ 數量與重量換算差異超過 5%！':'✓ 數量與重量換算差異在 5% 以內。')+' 重量換算約 '+estimated.toLocaleString('zh-TW')+' pcs；輸入 '+q.toLocaleString('zh-TW')+' pcs；差異 '+difference.toFixed(1)+'%。系統仍以輸入數量為準。';
+}
+['finishedDirectQty','finishedTotalWeight','finishedUnitWeight'].forEach(id=>document.getElementById(id)?.addEventListener('input',updateQuantityWeightDifferenceNotice_));
+document.querySelectorAll('input[name="reportMode"]').forEach(el=>el.addEventListener('change',updateQuantityWeightDifferenceNotice_));
+
 function bindFinishedReportEvents() {
   const totalWeightEl =
     document.getElementById(
@@ -3477,6 +3502,20 @@ function renderFinishedBatchInfo(
       ? '緯丞批號'
       : '廠商批號';
 
+function finishedIntakeHtmlQr_(batch) {
+  const qtyMode=String(batch.inputMode||'').trim()==='數量';
+  const qty=batch.inputQuantity;
+  const hasQty=qty!==''&&qty!==null&&qty!==undefined&&Number.isFinite(Number(qty))&&Number(qty)>0;
+  const weight=Number(batch.arrivalWeight||0);
+  const hasWeight=Number.isFinite(weight)&&weight>0;
+  if(qtyMode){
+    return `<div><strong>領料數量：</strong>${hasQty?Number(qty).toLocaleString('zh-TW')+' pcs':'尚未登錄'}</div>`+
+      (hasWeight?`<div><strong>來料總重：</strong>${formatDecimal(weight,4)} kg</div>`:'');
+  }
+  return `<div><strong>來料總重：</strong>${hasWeight?formatDecimal(weight,4)+' kg':'尚未登錄'}</div>`+
+    (hasQty?`<div><strong>領料數量：</strong>${Number(qty).toLocaleString('zh-TW')} pcs</div>`:'');
+}
+
   document
     .getElementById(
       'finishedBatchInfo'
@@ -3499,10 +3538,7 @@ function renderFinishedBatchInfo(
           <strong>供料方：</strong>
           ${escapeHtml(batch.supplier || '-')}
         </div>
-        <div>
-          <strong>來料總重：</strong>
-          ${formatDecimal(batch.arrivalWeight, 4)} kg
-        </div>
+        ${finishedIntakeHtmlQr_(batch)}
         <div>
           <strong>${batch.materialSource === '自購料' ? '領料日期' : '清洗日期'}：</strong>
           ${escapeHtml(batch.washDate || '-')}
