@@ -3544,7 +3544,6 @@ function finishedIntakeHtmlQr_(batch) {
     )
     .innerHTML =
       `
-        ${completionRemark ? `<div style="white-space:pre-wrap"><strong>結案備註：</strong>${escapeHtml(completionRemark)}</div>` : ''}
         <div>
           <strong>件號：</strong>
           ${escapeHtml(batch.partNo || '-')}
@@ -3566,6 +3565,8 @@ function finishedIntakeHtmlQr_(batch) {
           <strong>${batch.materialSource === '自購料' ? '領料日期' : '清洗日期'}：</strong>
           ${escapeHtml(batch.washDate || '-')}
         </div>
+        <div><strong>狀態：</strong>${escapeHtml(batch.status || '-')}</div>
+        ${completionRemark ? `<div style="white-space:pre-wrap"><strong>結案備註：</strong>${escapeHtml(completionRemark)}</div>` : ''}
       `;
 
   const summaryEl =
