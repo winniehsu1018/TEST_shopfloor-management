@@ -3441,7 +3441,8 @@ async function loadFinishedReportContext() {
     updateFinishedMode_();
     renderFinishedBatchInfo(
       result.batch,
-      result.summary
+      result.summary,
+      result.completionRemark
     );
 
     const historyTitle =
@@ -3513,7 +3514,8 @@ function renderFinishedReturnClosure_(records) {
 
 function renderFinishedBatchInfo(
   batch,
-  summary
+  summary,
+  completionRemark
 ) {
   const lotLabel =
     String(
@@ -3542,6 +3544,7 @@ function finishedIntakeHtmlQr_(batch) {
     )
     .innerHTML =
       `
+        ${completionRemark ? `<div style="white-space:pre-wrap"><strong>結案備註：</strong>${escapeHtml(completionRemark)}</div>` : ''}
         <div>
           <strong>件號：</strong>
           ${escapeHtml(batch.partNo || '-')}
